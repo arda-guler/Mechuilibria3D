@@ -166,7 +166,7 @@ def init():
              s20, s21, s22, s23, s24, s25]
 
     ## GROUND
-    floor = ground(0, [0,1,0], 0.5, 0.25)
+    floor = ground(0, [0.7,0.7,0.7], 0.5, 0.25)
 
     ## FORCES
     forces = []
@@ -177,11 +177,11 @@ def main():
     main_cam, dt, points, links, floor, forces = init()
     glfw.init()
 
-    window = glfw.create_window(800,600,"Mechuilibria3D", None, None)
+    window = glfw.create_window(1000,600,"Mechuilibria3D", None, None)
     glfw.set_window_pos(window,100,100)
     glfw.make_context_current(window)
     
-    gluPerspective(70, 800/600, 0.005, 10000)
+    gluPerspective(70, 1000/600, 0.005, 10000)
     glEnable(GL_CULL_FACE)
     glClearColor(0.3, 0.3, 0.3, 1)
     glPointSize(3)
@@ -223,9 +223,13 @@ def main():
         for f in forces:
             f.apply()
 
+        applied_force_ratios = []
         for l in links:
             if not dt == 0:
                 l.apply_force()
+                applied_force_ratios.append(abs(l.calc_force()/l.k))
+
+        max_link_force = max(applied_force_ratios)
 
         for p in points:
             if not dt == 0:
@@ -236,7 +240,7 @@ def main():
             p.clear_accel()
 
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-        drawScene(points, links, [], main_cam, floor)
+        drawScene(points, links, [], main_cam, floor, max_link_force)
         glfw.swap_buffers(window)
 
         time.sleep(dt)

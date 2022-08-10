@@ -33,15 +33,92 @@ def drawPoints(points):
 
         glPopMatrix()
 
-def drawLinks(links):
+def drawLinks(links, max_link_force):
     
     for l in links:
-        glColor(l.color[0], l.color[1], l.color[2])
+        # change color to label color
+        # glColor(l.color[0], l.color[1], l.color[2])
+
+        # change color to force level color
+        # calculate how red it should be, clamped between 0 and 1
+        if not max_link_force == 0:
+            red_level = max(min((l.calc_force()/l.k)/max_link_force, 1), 0)
+            blue_level = max(min((-l.calc_force()/l.k)/max_link_force, 1), 0)
+            green_level = (1 - red_level**2 - blue_level**2)**0.5
+        else:
+            red_level = 0
+            blue_level = 0
+            green_level = 1
+            
+        glColor(red_level, green_level, blue_level)
 
         glBegin(GL_LINES)
         glVertex3f(l.p1.pos.x, l.p1.pos.y, l.p1.pos.z)
         glVertex3f(l.p2.pos.x, l.p2.pos.y, l.p2.pos.z)
         glEnd()
+
+def drawPoint2D(x, y, color, camera):
+    glPushMatrix()
+
+    glTranslate(-camera.pos.x,
+                -camera.pos.y,
+                -camera.pos.z)
+    
+    glColor(color[0], color[1], color[2])
+
+    glBegin(GL_POINTS)
+
+    x1 = x * 100
+    y1 = y * 100
+
+    glVertex3f((x1) * camera.get_orient()[0][0] + (y1) * camera.get_orient()[1][0] + (-1000) * camera.get_orient()[2][0],
+               (x1) * camera.get_orient()[0][1] + (y1) * camera.get_orient()[1][1] + (-1000) * camera.get_orient()[2][1],
+               (x1) * camera.get_orient()[0][2] + (y1) * camera.get_orient()[1][2] + (-1000) * camera.get_orient()[2][2])
+
+    glEnd()
+    
+    glPopMatrix()
+
+def drawLine2D(x1, y1, x2, y2, color, camera):
+    glPushMatrix()
+    glTranslate(-camera.pos.x,
+                -camera.pos.y,
+                -camera.pos.z)
+    
+    glColor(color[0], color[1], color[2])
+    
+    glBegin(GL_LINES)
+
+    x1 = x1 * 100
+    y1 = y1 * 100
+    x2 = x2 * 100
+    y2 = y2 * 100
+    glVertex3f((x1) * camera.get_orient()[0][0] + (y1) * camera.get_orient()[1][0] + (-1000) * camera.get_orient()[2][0],
+               (x1) * camera.get_orient()[0][1] + (y1) * camera.get_orient()[1][1] + (-1000) * camera.get_orient()[2][1],
+               (x1) * camera.get_orient()[0][2] + (y1) * camera.get_orient()[1][2] + (-1000) * camera.get_orient()[2][2])
+    
+    glVertex3f((x2) * camera.get_orient()[0][0] + (y2) * camera.get_orient()[1][0] + (-1000) * camera.get_orient()[2][0],
+               (x2) * camera.get_orient()[0][1] + (y2) * camera.get_orient()[1][1] + (-1000) * camera.get_orient()[2][1],
+               (x2) * camera.get_orient()[0][2] + (y2) * camera.get_orient()[1][2] + (-1000) * camera.get_orient()[2][2])
+    glEnd()
+    glPopMatrix()
+
+def drawRectangle2D(x1, y1, x2, y2, color, camera):
+    drawLine2D(x1, y1, x2, y1, color, camera)
+    drawLine2D(x1, y1, x1, y2, color, camera)
+    drawLine2D(x2, y1, x2, y2, color, camera)
+    drawLine2D(x1, y2, x2, y2, color, camera)
+
+def drawColorScale(x1, y1, x2, y2, camera, max_val, colorUp, colorDown, colorMid=None, text_size=0.075):
+    drawRectangle2D(x1, y1, x2, y2, [1,1,1], camera)
+    drawLine2D(x1, y1, x2, y1, colorUp, camera)
+    drawLine2D(x1, y2, x2, y2, colorDown, camera)
+    if colorMid:
+        drawLine2D(x1, (y1+y2)/2, x2, (y1+y2)/2, colorMid, camera)
+
+    #render_AN("RAPID COMPUTE ACTIVE", (1,0,0), [-5, 0.5], cam, size)
+    render_AN("TENSION " + str(round(max_val,5)), colorUp, [x2 + text_size, y1], camera, text_size)
+    render_AN("COMPRESSION " + str(round(max_val,5)), colorDown, [x2 + text_size, y2], camera, text_size)
 
 def drawGround(floor, size=100, divisions=20):
 
@@ -60,13 +137,13 @@ def drawGround(floor, size=100, divisions=20):
 
     glEnd()
 
-def drawScene(points, links, forces, active_cam, floor):
-
+def drawScene(points, links, forces, active_cam, floor, max_link_force):
     points.sort(key=lambda x: mag([-x.pos.x - active_cam.pos.x, -x.pos.y - active_cam.pos.y, -x.pos.z - active_cam.pos.z]), reverse=True)
     links.sort(key=lambda x: mag([-x.pos.x - active_cam.pos.x, -x.pos.y - active_cam.pos.y, -x.pos.z - active_cam.pos.z]), reverse=True)
 
     drawGround(floor)
-    drawLinks(links)
+    drawLinks(links, max_link_force)
     drawPoints(points)
+    drawColorScale(-10, 6, -9.5, 3, active_cam, max_link_force, [1,0,0], [0,0,1], [0,1,0])
     #drawOrigin()
 

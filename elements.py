@@ -54,6 +54,15 @@ class link:
             p1.apply_force(p1.direction_to(p2) * self.k * (dist - self.neutral_length))
             p2.apply_force(p2.direction_to(p1) * self.k * (dist - self.neutral_length))
 
+    def calc_force(self):
+        p1 = self.p1
+        p2 = self.p2
+        dist = p1.get_dist_to(p2)
+        if not dist == self.neutral_length:
+            return self.k * (dist - self.neutral_length)
+        else:
+            return 0
+
 class ground:
     def __init__(self, height, color, elasticity, k):
         self.height = height

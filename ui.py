@@ -5,9 +5,9 @@ from OpenGL.GLU import *
 def drawPoint2D(x, y, color, camera):
     glPushMatrix()
 
-    glTranslate(-camera.get_pos()[0],
-                -camera.get_pos()[1],
-                -camera.get_pos()[2])
+    glTranslate(-camera.pos.x,
+                -camera.pos.y,
+                -camera.pos.z)
     
     glColor(color[0], color[1], color[2])
 
@@ -26,9 +26,9 @@ def drawPoint2D(x, y, color, camera):
 
 def drawLine2D(x1, y1, x2, y2, color, camera):
     glPushMatrix()
-    glTranslate(-camera.get_pos()[0],
-                -camera.get_pos()[1],
-                -camera.get_pos()[2])
+    glTranslate(-camera.pos.x,
+                -camera.pos.y,
+                -camera.pos.z)
     
     glColor(color[0], color[1], color[2])
     
