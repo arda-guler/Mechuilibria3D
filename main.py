@@ -15,6 +15,11 @@ from graphics import *
 points = []
 links = []
 
+vp_size_changed = False
+def resize_cb(window, w, h):
+    global vp_size_changed
+    vp_size_changed = True
+
 def init():
     global points, links
     main_cam = camera("main_cam", vec3(), [[1,0,0],[0,1,0],[0,0,1]], True)
@@ -174,12 +179,14 @@ def init():
     return main_cam, dt, points, links, floor, forces
 
 def main():
+    global vp_size_changed
     main_cam, dt, points, links, floor, forces = init()
     glfw.init()
 
     window = glfw.create_window(1000,600,"Mechuilibria3D", None, None)
     glfw.set_window_pos(window,100,100)
     glfw.make_context_current(window)
+    glfw.set_window_size_callback(window, resize_cb)
     
     gluPerspective(70, 1000/600, 0.005, 10000)
     glEnable(GL_CULL_FACE)
@@ -208,6 +215,11 @@ def main():
     while not glfw.window_should_close(window):
         sim_time += dt
         glfw.poll_events()
+
+        if vp_size_changed:
+            vp_size_changed = False
+            w, h = glfw.get_framebuffer_size(window)
+            glViewport(0, 0, w, h)
 
         main_cam.rotate(vec3((keyboard.is_pressed(cam_pitch_up) - keyboard.is_pressed(cam_pitch_down)) * cam_rotate_speed,
                              (keyboard.is_pressed(cam_yaw_left) - keyboard.is_pressed(cam_yaw_right)) * cam_rotate_speed,
