@@ -11,7 +11,7 @@ More documentation will be added in the near future.
 For a quick demonstration of the software;
 - Run main.py from your command line / terminal.
 - Enter 'y' when the program asks you if you wish to import a structure.
-- When asked about the structure filename, type in either 'crane' or 'kubusschnitt'. This will load a sample structure I have designed earlier.
+- When asked about the structure filename, type in either 'crane' or 'bridge'. This will load one of the sample structures I have designed earlier.
 - Move around with the camera and watch the dynamic behaviour of the structures.
 
 Camera movement controls:
