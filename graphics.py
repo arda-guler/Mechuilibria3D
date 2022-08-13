@@ -155,11 +155,14 @@ def drawForces(forces):
             arrowhead_vector1 = f_dir.cross(vec3(1,0,0))
         else:
             arrowhead_vector1 = f_dir.cross(vec3(0,1,0))
+
+        arrowhead_vector2 = arrowhead_vector1.cross(f_dir)
+
+        arrowhead_vector1 = arrowhead_vector1 * f.force.mag() * scaler * 0.1
+        arrowhead_vector2 = arrowhead_vector2 * f.force.mag() * scaler * 0.1
             
         arrowhead_pt1 = arrowhead_start + arrowhead_vector1
         arrowhead_pt2 = arrowhead_start - arrowhead_vector1
-
-        arrowhead_vector2 = arrowhead_vector1.cross(f_dir)
 
         arrowhead_pt3 = arrowhead_start + arrowhead_vector2
         arrowhead_pt4 = arrowhead_start - arrowhead_vector2
@@ -203,28 +206,29 @@ def drawForces(forces):
 def drawCursors(cursors, camera):
 
     for cursor in cursors:
-        glPushMatrix()
+        if cursor.visible:
+            glPushMatrix()
 
-        glTranslate(cursor.pos.x,
-                    cursor.pos.y,
-                    cursor.pos.z)
-        
-        glColor(cursor.color[0], cursor.color[1], cursor.color[2])
+            glTranslate(cursor.pos.x,
+                        cursor.pos.y,
+                        cursor.pos.z)
+            
+            glColor(cursor.color[0], cursor.color[1], cursor.color[2])
 
-        glBegin(GL_LINES)
+            glBegin(GL_LINES)
 
-        glVertex3f(2,0,0)
-        glVertex3f(-2,0,0)
+            glVertex3f(2,0,0)
+            glVertex3f(-2,0,0)
 
-        glVertex3f(0,2,0)
-        glVertex3f(0,-2,0)
+            glVertex3f(0,2,0)
+            glVertex3f(0,-2,0)
 
-        glVertex3f(0,0,2)
-        glVertex3f(0,0,-2)
+            glVertex3f(0,0,2)
+            glVertex3f(0,0,-2)
 
-        glEnd()
-        
-        glPopMatrix()
+            glEnd()
+            
+            glPopMatrix()
 
 def drawScene(points, links, forces, cursors, active_cam, floor, max_link_force):
     points.sort(key=lambda x: mag([-x.pos.x - active_cam.pos.x, -x.pos.y - active_cam.pos.y, -x.pos.z - active_cam.pos.z]), reverse=True)

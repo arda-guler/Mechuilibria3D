@@ -32,6 +32,79 @@ def resize_cb(window, w, h):
     global vp_size_changed
     vp_size_changed = True
 
+def import_save(filename):
+    global points, links, forces
+
+    filepath = "structures/" + filename + ".m3s"
+    
+    points = []
+    links = []
+    forces = []
+    
+    f = open(filepath, "r")
+    lines = f.readlines()
+
+    for line in lines:
+        line = line.split("|")
+        if line[0] == "P":
+            new_point = point_mass(line[1],
+                                   vec3(float(line[2][1:-1].split(",")[0]),
+                                        float(line[2][1:-1].split(",")[1]),
+                                        float(line[2][1:-1].split(",")[2])),
+                                   vec3(float(line[3][1:-1].split(",")[0]),
+                                        float(line[3][1:-1].split(",")[1]),
+                                        float(line[3][1:-1].split(",")[2])),
+                                   [float(line[4][1:-1].split(",")[0]),
+                                    float(line[4][1:-1].split(",")[1]),
+                                    float(line[4][1:-1].split(",")[2])],
+                                    float(line[5]),
+                                    bool(line[6][0:4]=="True"))
+            points.append(new_point)
+
+        elif line[0] == "L":
+            new_link = link(line[1],
+                            get_point_by_ident(line[2]),
+                            get_point_by_ident(line[3]),
+                            [float(line[4][1:-1].split(",")[0]),
+                             float(line[4][1:-1].split(",")[1]),
+                             float(line[4][1:-1].split(",")[2])],
+                            float(line[5]))
+
+            links.append(new_link)
+
+        elif line[0] == "F":
+            new_const_force = const_force(line[1],
+                                          get_point_by_ident(line[2]),
+                                          vec3(float(line[3][1:-1].split(",")[0]),
+                                               float(line[3][1:-1].split(",")[1]),
+                                               float(line[3][1:-1].split(",")[2]))
+                                          )
+            forces.append(new_const_force)
+
+    return points, links, forces
+
+def export_structure():
+    global points, links, forces
+
+    filename = input("Export filename:")
+    filepath = "structures/" + filename + ".m3s"
+
+    with open(filepath, "w") as expfile:
+        for p in points:
+            point_string = "P|" + p.ident + "|[" + str(p.pos.x) + "," + str(p.pos.y) + "," + str(p.pos.z) + "]|[" + str(p.vel.x) + "," + str(p.vel.y) + "," + str(p.vel.z) + "]|" + str(p.color) + "|" + str(p.mass) + "|" + str(p.static) + "\n"
+            expfile.write(point_string)
+
+        for l in links:
+            link_string = "L|" + l.ident + "|" + l.p1.ident + "|" + l.p2.ident + "|" + str(l.color) + "|" + str(l.k) + "\n"
+            expfile.write(link_string)
+
+        for f in forces:
+            force_string = "F|" + f.ident + "|" + f.point.ident + "|[" + str(f.force.x) + "," + str(f.force.y) + "," + str(f.force.z) + "]|\n"
+            expfile.write(force_string)
+
+    print("Structure export complete!")
+    input("Press Enter to continue...")
+            
 def create_point(ident, pos, vel, color, mass, static=False):
     global points
     
@@ -118,161 +191,22 @@ def init():
     main_cam = camera("main_cam", vec3(), [[1,0,0],[0,1,0],[0,0,1]], True)
     dt = 0.005
 
-    ## POINTS (ident, pos, vel, volor, mass, static)
-    p0 = point_mass("p0", vec3(0,0,0), vec3(), [1,0,0], 1, True)
-    p1 = point_mass("p1", vec3(2,0,0), vec3(), [1,0,0], 1, True)
-    p2 = point_mass("p2", vec3(2,0,-2), vec3(), [1,0,0], 1, True)
-    p3 = point_mass("p3", vec3(0,0,-2), vec3(), [1,0,0], 1, True)
+    import_yesno = input("Import structure? (y/N):")
+    if not import_yesno or import_yesno.lower() == "n":
+        points = []
+        links = []
+        forces = []
 
-    p4 = point_mass("p4", vec3(0,5,0), vec3(), [1,0,0], 1)
-    p5 = point_mass("p5", vec3(2,5,0), vec3(), [1,0,0], 1)
-    p6 = point_mass("p6", vec3(2,5,-2), vec3(), [1,0,0], 1)
-    p7 = point_mass("p7", vec3(0,5,-2), vec3(), [1,0,0], 1)
-
-    p8 = point_mass("p8", vec3(0,10,0), vec3(), [1,0,0], 1)
-    p9 = point_mass("p9", vec3(2,10,0), vec3(), [1,0,0], 1)
-    p10 = point_mass("p10", vec3(2,10,-2), vec3(), [1,0,0], 1)
-    p11 = point_mass("p11", vec3(0,10,-2), vec3(), [1,0,0], 1)
-
-    p12 = point_mass("p12", vec3(0,15,0), vec3(), [1,0,0], 1)
-    p13 = point_mass("p13", vec3(2,15,0), vec3(), [1,0,0], 1)
-    p14 = point_mass("p14", vec3(2,15,-2), vec3(), [1,0,0], 1)
-    p15 = point_mass("p15", vec3(0,15,-2), vec3(), [1,0,0], 1)
-
-    p16 = point_mass("p16", vec3(-12,15,0), vec3(), [1,0,0], 1)
-    p17 = point_mass("p17", vec3(-12,10,0), vec3(), [1,0,0], 1)
-    p18 = point_mass("p18", vec3(-12,10,-2), vec3(), [1,0,0], 1)
-    p19 = point_mass("p19", vec3(-12,15,-2), vec3(), [1,0,0], 1)
-
-    p20 = point_mass("p20", vec3(20,15,0), vec3(), [1,0,0], 1)
-    p21 = point_mass("p21", vec3(20,12,0), vec3(), [1,0,0], 1)
-    p22 = point_mass("p22", vec3(20,12,-2), vec3(), [1,0,0], 1)
-    p23 = point_mass("p23", vec3(20,15,-2), vec3(), [1,0,0], 1)
-
-    p24 = point_mass("p24", vec3(25,15,-1), vec3(), [1,0,0], 1)
-    
-    points = [p0, p1, p2, p3, p4, p5, p6, p7, p8, p9,
-              p10, p11, p12, p13, p14, p15, p16, p17, p18, p19,
-              p20, p21, p22, p23, p24]
-
-    ## LINKS
-    l1 = link("l1", p0, p1, [0,1,1])
-    l2 = link("l2", p1, p2, [0,1,1])
-    l3 = link("l3", p2, p3, [0,1,1])
-    l4 = link("l4", p3, p0, [0,1,1])
-
-    l5 = link("l5", p4, p5, [0,1,1])
-    l6 = link("l6", p5, p6, [0,1,1])
-    l7 = link("l7", p6, p7, [0,1,1])
-    l8 = link("l8", p7, p4, [0,1,1])
-
-    l9 = link("l9", p8, p9, [0,1,1], 15000)
-    l10 = link("l10", p9, p10, [0,1,1], 15000)
-    l11 = link("l11", p10, p11, [0,1,1], 15000)
-    l12 = link("l12", p11, p8, [0,1,1], 15000)
-
-    l13 = link("l13", p12, p13, [0,1,1])
-    l14 = link("l14", p13, p14, [0,1,1])
-    l15 = link("l15", p14, p15, [0,1,1])
-    l16 = link("l16", p15, p12, [0,1,1])
-
-    l17 = link("l17", p0, p4, [0,1,1], 15000)
-    l18 = link("l18", p1, p5, [0,1,1], 15000)
-    l19 = link("l19", p2, p6, [0,1,1], 15000)
-    l20 = link("l20", p3, p7, [0,1,1], 15000)
-
-    l21 = link("l21", p4, p8, [0,1,1], 15000)
-    l22 = link("l22", p5, p9, [0,1,1], 15000)
-    l23 = link("l23", p6, p10, [0,1,1], 15000)
-    l24 = link("l24", p7, p11, [0,1,1], 15000)
-
-    l25 = link("l25", p8, p12, [0,1,1], 15000)
-    l26 = link("l26", p9, p13, [0,1,1], 15000)
-    l27 = link("l27", p10, p14, [0,1,1], 15000)
-    l28 = link("l28", p11, p15, [0,1,1], 15000)
-
-    l29 = link("l29", p12, p16, [0,1,1])
-    l30 = link("l30", p8, p17, [0,1,1])
-    l31 = link("l31", p11, p18, [0,1,1])
-    l32 = link("l32", p15, p19, [0,1,1])
-
-    l29 = link("l29", p12, p16, [0,1,1])
-    l30 = link("l30", p8, p17, [0,1,1])
-    l31 = link("l31", p11, p18, [0,1,1])
-    l32 = link("l32", p15, p19, [0,1,1])
-
-    l33 = link("l33", p16, p17, [0,1,1])
-    l34 = link("l34", p17, p18, [0,1,1])
-    l35 = link("l35", p18, p19, [0,1,1])
-    l36 = link("l36", p19, p16, [0,1,1])
-
-    l37 = link("l37", p13, p20, [0,1,1])
-    l38 = link("l38", p9, p21, [0,1,1])
-    l39 = link("l39", p10, p22, [0,1,1])
-    l40 = link("l40", p14, p23, [0,1,1])
-
-    l41 = link("l41", p20, p21, [0,1,1])
-    l42 = link("l42", p21, p22, [0,1,1])
-    l43 = link("l43", p22, p23, [0,1,1])
-    l44 = link("l44", p23, p20, [0,1,1])
-
-    l45 = link("l45", p20, p24, [0,1,1])
-    l46 = link("l46", p21, p24, [0,1,1])
-    l47 = link("l47", p22, p24, [0,1,1])
-    l48 = link("l48", p23, p24, [0,1,1])
-
-    s1 = link("s1", p0, p5, [1,0,1])
-    s2 = link("s1", p1, p6, [1,0,1])
-    s3 = link("s3", p2, p7, [1,0,1])
-    s4 = link("s4", p3, p4, [1,0,1])
-
-    s5 = link("s5", p4, p9, [1,0,1])
-    s6 = link("s6", p5, p10, [1,0,1])
-    s7 = link("s7", p6, p11, [1,0,1])
-    s8 = link("s8", p7, p8, [1,0,1])
-
-    s9 = link("s9", p8, p13, [1,0,1])
-    s10 = link("s10", p9, p14, [1,0,1])
-    s11 = link("s11", p10, p15, [1,0,1])
-    s12 = link("s12", p11, p12, [1,0,1])
-
-    s13 = link("s13", p16, p15, [1,0,1])
-    s14 = link("s14", p17, p12, [1,0,1])
-    s15 = link("s15", p18, p8, [1,0,1])
-    s16 = link("s16", p19, p11, [1,0,1])
-
-    s17 = link("s17", p16, p18, [1,0,1])
-
-    s18 = link("s18", p9, p20, [1,0,1])
-    s19 = link("s19", p10, p21, [1,0,1])
-    s20 = link("s20", p14, p22, [1,0,1])
-    s21 = link("s21", p13, p23, [1,0,1])
-
-    s22 = link("s22", p20, p22, [1,0,1])
-
-    s23 = link("s23", p4, p6, [1,0,1])
-    s24 = link("s24", p8, p10, [1,0,1], 15000)
-    s25 = link("s25", p12, p14, [1,0,1])
-    
-    links = [l1, l2, l3, l4, l5, l6, l7, l8, l9,
-             l10, l11, l12, l13, l14, l15, l16, l17, l18, l19,
-             l20, l21, l22, l23, l24, l25, l26, l27, l28, l29,
-             l30, l31, l32, l33, l34, l35, l36, l37, l38, l39,
-             l40, l41, l42, l43, l44, l45, l46, l47, l48,
-             s1, s2, s3, s4, s5, s6, s7, s8, s9,
-             s10, s11, s12, s13, s14, s15, s16, s17, s18, s19,
-             s20, s21, s22, s23, s24, s25]
+    else:
+        filename = input("Structure filename:")
+        points, links, forces = import_save(filename)
 
     ## GROUND
     floor = ground(0, [0.7,0.7,0.7], 0.5, 0.25)
 
-    ## FORCES
-    f1 = const_force("force1", p20, vec3(0, 50, 0))
-    forces = [f1]
-
     ## 3D CURSORS
-    cursor_A = cursor(vec3(1,0,0), [1,0,0])
-    cursor_B = cursor(vec3(-1,0,0), [0,0,1])
+    cursor_A = cursor(vec3(1,0,0), [1,0,0], False)
+    cursor_B = cursor(vec3(-1,0,0), [0,0,1], False)
     cursors = [cursor_A, cursor_B]
     
     return main_cam, dt, points, links, floor, forces, cursors
@@ -315,6 +249,8 @@ def main():
     sim_time = 0
     cycle = 0
     frame_command = False
+
+    #export_structure()
     while not glfw.window_should_close(window):
         sim_time += dt
         frame_command = False
@@ -396,6 +332,9 @@ def main():
             elif command[0] == "dt":
                 dt = float(command[1])
 
+            elif command[0] == "export_structure":
+                export_structure()
+
             elif command == "":
                 pass
 
@@ -416,7 +355,10 @@ def main():
                 l.apply_force()
                 applied_force_ratios.append(abs(l.calc_force()/l.k))
 
-        max_link_force = max(applied_force_ratios)
+        if applied_force_ratios:
+            max_link_force = max(applied_force_ratios)
+        else:
+            max_link_force = 1
 
         for p in points:
             if not dt == 0:
