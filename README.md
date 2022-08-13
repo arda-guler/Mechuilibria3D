@@ -1,7 +1,7 @@
 # Mechuilibria3D
 A simple structural analysis tool as well as a physics sandbox. Design 3D structures out of beams and simulate their dynamic behavior under internal and external forces.
 
-![mechuilibria3d-2](https://user-images.githubusercontent.com/80536083/184020128-c691bf1c-4241-4f84-8430-129dda685f84.PNG)
+![mechu3d](https://user-images.githubusercontent.com/80536083/184496515-8c2f13af-bb11-4432-b999-d53d065a18ab.PNG)
 
 See how the beams get under tension and compression under various loads, add more beams if required or change your connection points accordingly to best fit your design criteria. Apply external forces and see how many free movement axes your structure has - if any.
 
