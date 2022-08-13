@@ -11,17 +11,110 @@ from math_utils import *
 from ui import *
 from elements import *
 from graphics import *
+from cursor import *
 
 points = []
 links = []
+cursors = []
+forces = []
+
+def get_os_type():
+    return os.name
+
+def clear_cmd_terminal(os_name):
+    if os_name == "nt":
+        os.system("cls")
+    else:
+        os.system("clear")
 
 vp_size_changed = False
 def resize_cb(window, w, h):
     global vp_size_changed
     vp_size_changed = True
 
-def init():
+def create_point(ident, pos, vel, color, mass, static=False):
+    global points
+    
+    new_point = point_mass(ident, pos, vel, color, mass, static)
+    points.append(new_point)
+
+def remove_point(ident):
     global points, links
+
+    for p in points:
+        if p.ident == ident:
+            
+            for l in links:
+                if l.p1 == p or l.p2 == p:
+                    links.remove(l)
+                    del l
+
+            points.remove(p)
+            del p
+
+def get_point_by_ident(ident):
+    global points
+
+    result = None
+
+    for p in points:
+        if p.ident == ident:
+            result = p
+            break
+
+    return result
+
+def create_link(ident, p1, p2, color, k):
+    global links
+    
+    new_link = link(ident, p1, p2, color, k)
+    links.append(new_link)
+
+def remove_link(ident):
+    global links
+    for l in links:
+        if l.ident == ident:
+            links.remove(l)
+            del l
+
+def get_link_by_ident(ident):
+    global links
+
+    result = None
+
+    for l in links:
+        if l.ident == ident:
+            result = l
+            break
+
+    return result
+
+def create_const_force(ident, point, force):
+    global forces
+    new_force = const_force(ident, point, force)
+    forces.append(new_force)
+
+def remove_force(ident):
+    global forces
+    for f in forces:
+        if f.ident == ident:
+            forces.remove(f)
+            del f
+
+# clear all keyboard buffer
+# e.g. don't keep camera movement keys
+# in buffer as we try to enter a command
+def flush_input():
+    try:
+        import msvcrt
+        while msvcrt.kbhit():
+            msvcrt.getch()
+    except ImportError:
+        import sys, termios    #for linux/unix
+        termios.tcflush(sys.stdin, termios.TCIOFLUSH)
+
+def init():
+    global points, links, forces
     main_cam = camera("main_cam", vec3(), [[1,0,0],[0,1,0],[0,0,1]], True)
     dt = 0.005
 
@@ -174,13 +267,19 @@ def init():
     floor = ground(0, [0.7,0.7,0.7], 0.5, 0.25)
 
     ## FORCES
-    forces = []
+    f1 = const_force("force1", p20, vec3(0, 50, 0))
+    forces = [f1]
+
+    ## 3D CURSORS
+    cursor_A = cursor(vec3(1,0,0), [1,0,0])
+    cursor_B = cursor(vec3(-1,0,0), [0,0,1])
+    cursors = [cursor_A, cursor_B]
     
-    return main_cam, dt, points, links, floor, forces
+    return main_cam, dt, points, links, floor, forces, cursors
 
 def main():
     global vp_size_changed
-    main_cam, dt, points, links, floor, forces = init()
+    main_cam, dt, points, links, floor, forces, cursors = init()
     glfw.init()
 
     window = glfw.create_window(1000,600,"Mechuilibria3D", None, None)
@@ -211,9 +310,14 @@ def main():
     cam_strafe_forward = "I"
     cam_strafe_backward = "K"
 
+    os_name = str(get_os_type())
+
     sim_time = 0
+    cycle = 0
+    frame_command = False
     while not glfw.window_should_close(window):
         sim_time += dt
+        frame_command = False
         glfw.poll_events()
 
         if vp_size_changed:
@@ -229,6 +333,77 @@ def main():
                            (keyboard.is_pressed(cam_strafe_down) - keyboard.is_pressed(cam_strafe_up)) * cam_strafe_speed,
                            (keyboard.is_pressed(cam_strafe_forward) - keyboard.is_pressed(cam_strafe_backward)) * cam_strafe_speed))
 
+        if keyboard.is_pressed("c"):
+            frame_command = True
+
+        if frame_command:
+            flush_input()
+            command = input("\n > ")
+            command = command.split(" ")
+            command[0] = command[0].lower()
+
+            # --- COMMAND INTERPRETER ---
+            if command[0] == "create_point":
+                create_point(command[1], # ident
+                             vec3(float(command[2][1:-1].split(",")[0]),
+                                  float(command[2][1:-1].split(",")[1]),
+                                  float(command[2][1:-1].split(",")[2])), # position
+
+                             vec3(float(command[3][1:-1].split(",")[0]),
+                                  float(command[3][1:-1].split(",")[1]),
+                                  float(command[3][1:-1].split(",")[2])), # velocity
+                             
+                             [float(command[4][1:-1].split(",")[0]),
+                              float(command[4][1:-1].split(",")[1]),
+                              float(command[4][1:-1].split(",")[2])], # color
+
+                             float(command[5]), # mass
+
+                             int(command[6])) # static
+
+            elif command[0] == "remove_point":
+                remove_point(command[1])
+
+            elif command[0] == "create_link":
+                create_link(command[1], get_point_by_ident(command[2]), get_point_by_ident(command[3]),
+                            [float(command[4][1:-1].split(",")[0]),
+                             float(command[4][1:-1].split(",")[1]),
+                             float(command[4][1:-1].split(",")[2])],
+                            float(command[5]))
+
+            elif command[0] == "remove_link":
+                remove_link(command[1])
+
+            elif command[0] == "create_const_force":
+                create_const_force(command[1],
+                                   get_point_by_ident(command[2]),
+                                   vec3(float(command[3][1:-1].split(",")[0]),
+                                        float(command[3][1:-1].split(",")[1]),
+                                        float(command[3][1:-1].split(",")[2]))
+                                   )
+
+            elif command[0] == "remove_force":
+                remove_force(command[1])
+
+            elif command[0] == "clear_forces":
+                forces = []
+
+            elif command[0] == "clear_scene":
+                forces = []
+                links = []
+                points = []  
+
+            elif command[0] == "dt":
+                dt = float(command[1])
+
+            elif command == "":
+                pass
+
+            else:
+                print("Unrecognized command!")
+                input("Press Enter to continue...")
+
+        # PHYSICS HAPPENS BELOW
         if not dt == 0:
             floor.apply_force(points, dt)
 
@@ -252,9 +427,15 @@ def main():
             p.clear_accel()
 
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-        drawScene(points, links, [], main_cam, floor, max_link_force)
+        drawScene(points, links, forces, cursors, main_cam, floor, max_link_force)
         glfw.swap_buffers(window)
 
-        time.sleep(dt)
+        if cycle % 100 <= 1:
+            clear_cmd_terminal(os_name)
+            print("Mechuilibria 3D Command Interpreter")
+            print("T:", round(sim_time, 3))
+
+        #time.sleep(dt)
+        cycle += 1
 
 main()

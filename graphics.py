@@ -5,6 +5,7 @@ import math
 
 from math_utils import *
 from ui import *
+from vector3 import *
 
 def drawOrigin():
     glBegin(GL_LINES)
@@ -137,13 +138,103 @@ def drawGround(floor, size=100, divisions=20):
 
     glEnd()
 
-def drawScene(points, links, forces, active_cam, floor, max_link_force):
+def drawForces(forces):
+    
+    for f in forces:
+        glPushMatrix()
+
+        scaler = 0.2
+        start_position = f.point.pos
+        end_position = f.point.pos + f.force
+        f_vector = f.force * scaler
+        
+        f_dir = f_vector.normalized()
+        arrowhead_start = f.force * scaler * 0.8
+
+        if not f_dir.cross(vec3(1,0,0)) == vec3(0,0,0):
+            arrowhead_vector1 = f_dir.cross(vec3(1,0,0))
+        else:
+            arrowhead_vector1 = f_dir.cross(vec3(0,1,0))
+            
+        arrowhead_pt1 = arrowhead_start + arrowhead_vector1
+        arrowhead_pt2 = arrowhead_start - arrowhead_vector1
+
+        arrowhead_vector2 = arrowhead_vector1.cross(f_dir)
+
+        arrowhead_pt3 = arrowhead_start + arrowhead_vector2
+        arrowhead_pt4 = arrowhead_start - arrowhead_vector2
+        
+        glTranslate(start_position.x, start_position.y, start_position.z)
+        glColor(1,0,1)
+
+        glBegin(GL_LINES)
+
+        glVertex3f(0,0,0)
+        glVertex3f(f_vector.x, f_vector.y, f_vector.z)
+
+        glVertex3f(arrowhead_pt1.x, arrowhead_pt1.y, arrowhead_pt1.z)
+        glVertex3f(arrowhead_pt3.x, arrowhead_pt3.y, arrowhead_pt3.z)
+
+        glVertex3f(arrowhead_pt2.x, arrowhead_pt2.y, arrowhead_pt2.z)
+        glVertex3f(arrowhead_pt4.x, arrowhead_pt4.y, arrowhead_pt4.z)
+
+        glVertex3f(arrowhead_pt2.x, arrowhead_pt2.y, arrowhead_pt2.z)
+        glVertex3f(arrowhead_pt3.x, arrowhead_pt3.y, arrowhead_pt3.z)
+
+        glVertex3f(arrowhead_pt1.x, arrowhead_pt1.y, arrowhead_pt1.z)
+        glVertex3f(arrowhead_pt4.x, arrowhead_pt4.y, arrowhead_pt4.z)
+
+        glVertex3f(arrowhead_pt1.x, arrowhead_pt1.y, arrowhead_pt1.z)
+        glVertex3f(f_vector.x, f_vector.y, f_vector.z)
+
+        glVertex3f(arrowhead_pt2.x, arrowhead_pt2.y, arrowhead_pt2.z)
+        glVertex3f(f_vector.x, f_vector.y, f_vector.z)
+
+        glVertex3f(arrowhead_pt3.x, arrowhead_pt3.y, arrowhead_pt3.z)
+        glVertex3f(f_vector.x, f_vector.y, f_vector.z)
+
+        glVertex3f(arrowhead_pt4.x, arrowhead_pt4.y, arrowhead_pt4.z)
+        glVertex3f(f_vector.x, f_vector.y, f_vector.z)
+
+        glEnd()
+
+        glPopMatrix()
+
+def drawCursors(cursors, camera):
+
+    for cursor in cursors:
+        glPushMatrix()
+
+        glTranslate(cursor.pos.x,
+                    cursor.pos.y,
+                    cursor.pos.z)
+        
+        glColor(cursor.color[0], cursor.color[1], cursor.color[2])
+
+        glBegin(GL_LINES)
+
+        glVertex3f(2,0,0)
+        glVertex3f(-2,0,0)
+
+        glVertex3f(0,2,0)
+        glVertex3f(0,-2,0)
+
+        glVertex3f(0,0,2)
+        glVertex3f(0,0,-2)
+
+        glEnd()
+        
+        glPopMatrix()
+
+def drawScene(points, links, forces, cursors, active_cam, floor, max_link_force):
     points.sort(key=lambda x: mag([-x.pos.x - active_cam.pos.x, -x.pos.y - active_cam.pos.y, -x.pos.z - active_cam.pos.z]), reverse=True)
     links.sort(key=lambda x: mag([-x.pos.x - active_cam.pos.x, -x.pos.y - active_cam.pos.y, -x.pos.z - active_cam.pos.z]), reverse=True)
 
     drawGround(floor)
     drawLinks(links, max_link_force)
+    drawForces(forces)
     drawPoints(points)
+    drawCursors(cursors, active_cam)
     drawColorScale(-10, 6, -9.5, 3, active_cam, max_link_force, [1,0,0], [0,0,1], [0,1,0])
     #drawOrigin()
 
