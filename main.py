@@ -377,6 +377,7 @@ def main():
         for p in points:
             if not dt == 0:
                 p.apply_gravity()
+                p.apply_drag()
                 p.update_vel(dt)
                 p.update_pos(dt)
 

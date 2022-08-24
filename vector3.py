@@ -29,4 +29,7 @@ class vec3:
 
     def normalized(self):
         m = self.mag()
-        return vec3(self.x/m, self.y/m, self.z/m)
+        if not m == 0:
+            return vec3(self.x/m, self.y/m, self.z/m)
+        else:
+            return vec3(0,0,0)

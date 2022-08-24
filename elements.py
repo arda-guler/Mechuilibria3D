@@ -2,6 +2,7 @@ from math_utils import *
 from vector3 import *
 
 gravity = -9.81
+drag = 0.1
 
 class point_mass:
     def __init__(self, ident, pos, vel, color, mass, static=False):
@@ -27,6 +28,9 @@ class point_mass:
 
     def apply_gravity(self):
         self.apply_force(vec3(0, self.mass * gravity, 0))
+
+    def apply_drag(self):
+        self.apply_force(self.vel.normalized() * -1 * self.vel.mag()**2 * drag)
 
     def update_vel(self, dt):
         if not self.static:
