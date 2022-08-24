@@ -228,3 +228,5 @@ L|bsup3|s1t3|s2t3|[0,1,1]|300|rope
 
 L|bsup2|s3t2|s4t2|[0,1,1]|300|rope
 L|bsup3|s3t3|s4t3|[0,1,1]|300|rope
+
+F|force1|pwt0|[0.0,-15.0,0.0]|

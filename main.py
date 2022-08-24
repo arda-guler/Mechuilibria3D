@@ -62,13 +62,23 @@ def import_save(filename):
             points.append(new_point)
 
         elif line[0] == "L":
-            new_link = link(line[1],
-                            get_point_by_ident(line[2]),
-                            get_point_by_ident(line[3]),
-                            [float(line[4][1:-1].split(",")[0]),
-                             float(line[4][1:-1].split(",")[1]),
-                             float(line[4][1:-1].split(",")[2])],
-                            float(line[5]))
+            if len(line) == 6:
+                new_link = link(line[1],
+                                get_point_by_ident(line[2]),
+                                get_point_by_ident(line[3]),
+                                [float(line[4][1:-1].split(",")[0]),
+                                 float(line[4][1:-1].split(",")[1]),
+                                 float(line[4][1:-1].split(",")[2])],
+                                float(line[5]))
+            elif len(line) == 7:
+                new_link = link(line[1],
+                                get_point_by_ident(line[2]),
+                                get_point_by_ident(line[3]),
+                                [float(line[4][1:-1].split(",")[0]),
+                                 float(line[4][1:-1].split(",")[1]),
+                                 float(line[4][1:-1].split(",")[2])],
+                                float(line[5]),
+                                str(line[6])[:-1])
 
             links.append(new_link)
 
@@ -90,14 +100,18 @@ def export_structure():
     filepath = "structures/" + filename + ".m3s"
 
     with open(filepath, "w") as expfile:
+
+        print("Exporting points...")
         for p in points:
             point_string = "P|" + p.ident + "|[" + str(p.pos.x) + "," + str(p.pos.y) + "," + str(p.pos.z) + "]|[" + str(p.vel.x) + "," + str(p.vel.y) + "," + str(p.vel.z) + "]|" + str(p.color) + "|" + str(p.mass) + "|" + str(p.static) + "\n"
             expfile.write(point_string)
 
+        print("Exporting links...")
         for l in links:
-            link_string = "L|" + l.ident + "|" + l.p1.ident + "|" + l.p2.ident + "|" + str(l.color) + "|" + str(l.k) + "\n"
+            link_string = "L|" + l.ident + "|" + l.p1.ident + "|" + l.p2.ident + "|" + str(l.color) + "|" + str(l.k) + "|" + str(l.link_type) + "\n"
             expfile.write(link_string)
 
+        print("Exporting external forces...")
         for f in forces:
             force_string = "F|" + f.ident + "|" + f.point.ident + "|[" + str(f.force.x) + "," + str(f.force.y) + "," + str(f.force.z) + "]|\n"
             expfile.write(force_string)
@@ -137,10 +151,10 @@ def get_point_by_ident(ident):
 
     return result
 
-def create_link(ident, p1, p2, color, k):
+def create_link(ident, p1, p2, color, k, link_type):
     global links
     
-    new_link = link(ident, p1, p2, color, k)
+    new_link = link(ident, p1, p2, color, k, link_type)
     links.append(new_link)
 
 def remove_link(ident):
@@ -305,7 +319,7 @@ def main():
                             [float(command[4][1:-1].split(",")[0]),
                              float(command[4][1:-1].split(",")[1]),
                              float(command[4][1:-1].split(",")[2])],
-                            float(command[5]))
+                            float(command[5]), str(command[6]))
 
             elif command[0] == "remove_link":
                 remove_link(command[1])

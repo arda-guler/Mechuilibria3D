@@ -37,12 +37,13 @@ class point_mass:
             self.pos += self.vel * dt
 
 class link:
-    def __init__(self, ident, p1, p2, color, k=5000):
+    def __init__(self, ident, p1, p2, color, k=5000, link_type="beam"):
         self.ident = ident
         self.p1 = p1
         self.p2 = p2
         self.color = color
         self.k = k
+        self.link_type = link_type
         self.neutral_length = p1.get_dist_to(p2)
         self.pos = (p1.pos + p2.pos)/2
 
@@ -50,7 +51,12 @@ class link:
         p1 = self.p1
         p2 = self.p2
         dist = p1.get_dist_to(p2)
-        if not dist == self.neutral_length:
+        
+        if self.link_type == "beam" and not dist == self.neutral_length:
+            p1.apply_force(p1.direction_to(p2) * self.k * (dist - self.neutral_length))
+            p2.apply_force(p2.direction_to(p1) * self.k * (dist - self.neutral_length))
+
+        elif self.link_type == "rope" and dist > self.neutral_length:
             p1.apply_force(p1.direction_to(p2) * self.k * (dist - self.neutral_length))
             p2.apply_force(p2.direction_to(p1) * self.k * (dist - self.neutral_length))
 
@@ -58,8 +64,13 @@ class link:
         p1 = self.p1
         p2 = self.p2
         dist = p1.get_dist_to(p2)
-        if not dist == self.neutral_length:
+
+        if self.link_type == "beam" and not dist == self.neutral_length:
             return self.k * (dist - self.neutral_length)
+        
+        elif self.link_type == "rope" and dist > self.neutral_length:
+            return self.k * (dist - self.neutral_length)
+        
         else:
             return 0
 
